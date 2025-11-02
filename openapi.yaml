@@ -1,0 +1,195 @@
+openapi: 3.0.0
+info:
+  title: Booksy Turkey API
+  version: "1.0.0"
+  description: OpenAPI 3.0 spec (temel uç noktalar). Ödeme simülasyonu destekli.
+servers:
+  - url: https://api.booksytr.example.com/v1
+paths:
+  /auth/register:
+    post:
+      summary: Kullanıcı kayıt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Oluşturuldu
+  /auth/login:
+    post:
+      summary: Kullanıcı giriş
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Başarılı
+  /businesses:
+    get:
+      summary: İşletme arama
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: lat
+          schema:
+            type: number
+        - in: query
+          name: lng
+          schema:
+            type: number
+        - in: query
+          name: radius
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste
+  /businesses/{id}:
+    get:
+      summary: Tek işletme
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: İşletme detayı
+  /businesses/{id}/availability:
+    get:
+      summary: Müsaitlik (servis için)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: serviceId
+          schema:
+            type: string
+        - in: query
+          name: date
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Slot listesi
+  /businesses/{id}/bookings:
+    post:
+      summary: Rezervasyon oluştur
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBooking'
+      responses:
+        '201':
+          description: Rezervasyon oluşturuldu
+  /payments/intents:
+    post:
+      summary: Ödeme intent (simülatör / gateway)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentIntentCreate'
+      responses:
+        '201':
+          description: Intent oluşturuldu
+  /payments/webhook:
+    post:
+      summary: Gateway webhook (imzalanmış)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Alındı
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+    LoginRequest:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: email veya telefon
+        password:
+          type: string
+    CreateBooking:
+      type: object
+      properties:
+        customerId:
+          type: string
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingItem'
+        totalPrice:
+          type: integer
+          description: kuruş cinsinden
+        currency:
+          type: string
+        payment:
+          type: object
+          properties:
+            method:
+              type: string
+            token:
+              type: string
+            payDeposit:
+              type: boolean
+    BookingItem:
+      type: object
+      properties:
+        serviceId:
+          type: string
+        staffId:
+          type: string
+        start:
+          type: string
+          format: date-time
+    PaymentIntentCreate:
+      type: object
+      properties:
+        amount:
+          type: integer
+        currency:
+          type: string
+        bookingId:
+          type: string
+        returnUrl:
+          type: string
